@@ -4,6 +4,7 @@ import android.app.Dialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.CountDownTimer;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -41,10 +42,12 @@ public class QuizActivity extends AppCompatActivity {
 
     private int obtainedScore = 0, questionId = 0, answeredQsNo;
     private ArrayList<String> userAnswersList;
-    private boolean defaultLanguage = false, pressedFiftyButton = false;
+    private boolean defaultLanguage = false, pressedFiftyButton = false, isFinished=false;
     private DatabaseEnAccess databaseEnAccess;
     private DatabaseRoAccess databaseRoAccess;
     private String correctToast, incorrectToast,selectABtnToast;
+    private CountDownTimer countDownTimer;
+    long millisUntilFinished=15000, interval=1000;
 
 
     @Override
@@ -56,7 +59,6 @@ public class QuizActivity extends AppCompatActivity {
         final String language = extras.getString("Language");
         databaseEnAccess = DatabaseEnAccess.getInstance(this);
         databaseRoAccess = DatabaseRoAccess.getInstance(this);
-
 
         switch (language) {
             case "English":
@@ -113,6 +115,7 @@ public class QuizActivity extends AppCompatActivity {
                 RadioGroup grp = (RadioGroup) findViewById(R.id.radioGroup);
                 RadioButton answer = (RadioButton) findViewById(grp.getCheckedRadioButtonId());
 
+
                     Log.e("Answer ID", "Selected Positioned  value - " + grp.getCheckedRadioButtonId());
 
                     if (answer != null) {
@@ -141,6 +144,7 @@ public class QuizActivity extends AppCompatActivity {
                         if (questionId < questionsList.size()) {
                             currentQuestion = questionsList.get(questionId);
                             setQuestionsView();
+                            countDownTimer.start();
                         } else {
 
                             final Bundle b = new Bundle();
@@ -246,7 +250,62 @@ public class QuizActivity extends AppCompatActivity {
             }
         });
 
+
+        countDownTimer=new CountDownTimer(millisUntilFinished,interval) {
+            @Override
+            public void onTick(long millisUntilFinished) {
+
+                timer.setText("00:"+millisUntilFinished/interval);
+
+
+            }
+
+            @Override
+            public void onFinish() {
+
+                if (questionId < questionsList.size()) {
+                    currentQuestion = questionsList.get(questionId);
+                    setQuestionsView();
+                } else {
+
+                    final Bundle b = new Bundle();
+                    b.putInt("score", obtainedScore);
+                    b.putInt("totalQs", questionsList.size());
+                    b.putString("Language", language);
+
+                    View view = (LayoutInflater.from(QuizActivity.this)).inflate(R.layout.user_alert_dialog_layout, null);
+                    AlertDialog.Builder alertBuilder = new AlertDialog.Builder(QuizActivity.this);
+                    alertBuilder.setView(view);
+                    final EditText etUserName = (EditText) view.findViewById(R.id.editTextUserName);
+                    alertBuilder.setCancelable(true).setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            if (etUserName.getText().toString().isEmpty() == false) {
+                                String username = etUserName.getText().toString();
+                                b.putString("Username", username);
+                                Intent intent = new Intent(QuizActivity.this, ResultsActivity.class);
+                                intent.putExtras(b);
+                                startActivity(intent);
+                                finish();
+                            } else {
+                                Toast.makeText(QuizActivity.this, "Please enter your name", Toast.LENGTH_SHORT).show();
+                            }
+                        }
+                    });
+                    Dialog dialog = alertBuilder.create();
+                    dialog.show();
+
+
+                }
+
+             countDownTimer.start();
+            }
+        }.start();
+
+
     }
+
+
 
     public int getCorrectAnswerButton() {
 
@@ -265,6 +324,7 @@ public class QuizActivity extends AppCompatActivity {
         tvShowAnswer = (TextView) findViewById(R.id.textViewAnsweredShown);
         tvNoOfQuestions = (TextView) findViewById(R.id.tvNoOfQuestions);
         tvQuestion = (TextView) findViewById(R.id.tvQuestion);
+        timer=(TextView) findViewById(R.id.textViewTimer);
         rbtnA = (RadioButton) findViewById(R.id.optionARadioBtn);
         rbtnB = (RadioButton) findViewById(R.id.optionBRadioBtn);
         rbtnC = (RadioButton) findViewById(R.id.optionCRadioBtn);
@@ -283,7 +343,7 @@ public class QuizActivity extends AppCompatActivity {
         rbtnB.setChecked(false);
         rbtnC.setChecked(false);
         rbtnD.setChecked(false);
-
+        timer.setText("00:15");
         answeredQsNo = questionId + 1;
         if (defaultLanguage == false) {
             tvNoOfQuestions.setText("Questions " + answeredQsNo + " of " + questionsList.size());
