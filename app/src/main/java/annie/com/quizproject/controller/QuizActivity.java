@@ -35,7 +35,7 @@ public class QuizActivity extends AppCompatActivity {
     private List<Question> allQuestions = null, questionsList;
     private Question currentQuestion;
 
-    private TextView tvQuestion, tvNoOfQuestions, tvShowAnswer;
+    private TextView tvQuestion, tvNoOfQuestions, tvShowAnswer, timer;
     private RadioButton rbtnA, rbtnB, rbtnC, rbtnD;
     private Button btnNext, btnShowAnswer, btnFifty, btnCancel;
 
@@ -269,7 +269,6 @@ public class QuizActivity extends AppCompatActivity {
         rbtnB = (RadioButton) findViewById(R.id.optionBRadioBtn);
         rbtnC = (RadioButton) findViewById(R.id.optionCRadioBtn);
         rbtnD = (RadioButton) findViewById(R.id.optionDRadioBtn);
-
         btnNext = (Button) findViewById(R.id.nextBtn);
         btnFifty = (Button) findViewById(R.id.fiftyBtn);
         btnShowAnswer = (Button) findViewById(R.id.showAnswerBtn);

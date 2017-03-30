@@ -4,6 +4,13 @@
     android:layout_height="match_parent">
 
     <TextView
+        android:id="@+id/textViewTimer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="@color/colorAccent"
+        android:textSize="16sp" />
+
+    <TextView
         android:id="@+id/tvNoOfQuestions"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
