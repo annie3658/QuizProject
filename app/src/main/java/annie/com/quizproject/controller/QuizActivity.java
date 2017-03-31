@@ -3,6 +3,7 @@ package annie.com.quizproject.controller;
 import android.app.Dialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.support.v7.app.AlertDialog;
@@ -21,16 +22,19 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.concurrent.TimeUnit;
+import android.os.Handler;
+import java.util.logging.LogRecord;
 
 import annie.com.quizproject.database.DatabaseEnAccess;
 import annie.com.quizproject.database.DatabaseRoAccess;
 import annie.com.quizproject.model.Question;
 import annie.com.quizproject.R;
-
 /**
  * Created by Annie on 30/03/2017.
  */
-
 public class QuizActivity extends AppCompatActivity {
 
     private List<Question> allQuestions = null, questionsList;
@@ -38,16 +42,16 @@ public class QuizActivity extends AppCompatActivity {
 
     private TextView tvQuestion, tvNoOfQuestions, tvShowAnswer, timer;
     private RadioButton rbtnA, rbtnB, rbtnC, rbtnD;
+    private RadioGroup grp;
     private Button btnNext, btnShowAnswer, btnFifty, btnCancel;
-
     private int obtainedScore = 0, questionId = 0, answeredQsNo;
-    private ArrayList<String> userAnswersList;
-    private boolean defaultLanguage = false, pressedFiftyButton = false, isFinished=false;
+    private boolean defaultLanguage = false, pressedFiftyButton = false, isFinished = false;
     private DatabaseEnAccess databaseEnAccess;
     private DatabaseRoAccess databaseRoAccess;
-    private String correctToast, incorrectToast,selectABtnToast;
+    private String correctToast, incorrectToast, selectABtnToast;
     private CountDownTimer countDownTimer;
-    long millisUntilFinished=15000, interval=1000;
+    private long millisUntilFinished = 15000, interval = 1000;
+    private final Bundle b = new Bundle();
 
 
     @Override
@@ -62,48 +66,14 @@ public class QuizActivity extends AppCompatActivity {
 
         switch (language) {
             case "English":
-                correctToast = "Correct";
-                incorrectToast = "Incorrect";
-                selectABtnToast="Please select an answer";
-                defaultLanguage = false;
-                databaseEnAccess.open();
-                allQuestions = databaseEnAccess.getEnglishQuestions();
-                Collections.shuffle(allQuestions);
-                questionsList = new ArrayList<Question>(allQuestions.subList(0, 10));
-                init();
-                currentQuestion = questionsList.get(questionId);
-                setQuestionsView();
-                databaseEnAccess.close();
-
+                setEnglish();
                 break;
             case "Romanian":
-                correctToast = "Corect";
-                incorrectToast = "Greșit";
-                selectABtnToast="Selectați un răspuns";
-                defaultLanguage = true;
-                databaseRoAccess.open();
-                allQuestions = databaseRoAccess.getRomanianQuestions();
-                Collections.shuffle(allQuestions);
-                questionsList = new ArrayList<Question>(allQuestions.subList(0, 10));
-                init();
-                currentQuestion = questionsList.get(questionId);
-                setQuestionsView();
-                databaseRoAccess.close();
+                setRomanian();
 
                 break;
             default:
-                correctToast = "Correct";
-                incorrectToast = "Incorrect";
-                selectABtnToast="Please select an answer";
-                defaultLanguage = false;
-                databaseEnAccess.open();
-                allQuestions = databaseEnAccess.getEnglishQuestions();
-                Collections.shuffle(allQuestions);
-                questionsList = new ArrayList<Question>(allQuestions.subList(0, 10));
-                init();
-                currentQuestion = questionsList.get(questionId);
-                setQuestionsView();
-                databaseEnAccess.close();
+                setEnglish();
 
         }
 
@@ -111,76 +81,41 @@ public class QuizActivity extends AppCompatActivity {
         btnNext.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Log.i("nextBtn","Entered next button");
-                RadioGroup grp = (RadioGroup) findViewById(R.id.radioGroup);
+                Log.i("nextBtn", "Entered next button");
                 RadioButton answer = (RadioButton) findViewById(grp.getCheckedRadioButtonId());
+                Log.e("Answer ID", "Selected Positioned  value - " + grp.getCheckedRadioButtonId());
 
+                if (answer != null) {
 
-                    Log.e("Answer ID", "Selected Positioned  value - " + grp.getCheckedRadioButtonId());
+                    resetRadioButtons();
 
-                    if (answer != null) {
+                    Log.e("Answer", currentQuestion.getAnswer() + " -- " + answer.getText());
 
-                        tvShowAnswer.setText("");
-                        if (pressedFiftyButton == true) {
-                            if (rbtnA.isEnabled() == false) rbtnA.setEnabled(true);
-                            if (rbtnB.isEnabled() == false) rbtnB.setEnabled(true);
-                            if (rbtnC.isEnabled() == false) rbtnC.setEnabled(true);
-                            if (rbtnD.isEnabled() == false) rbtnD.setEnabled(true);
-                        }
-
-                        Log.e("Answer", currentQuestion.getAnswer() + " -- " + answer.getText());
-
-                        //userAnswersList.add("" + answer.getText());
-
-                        if (currentQuestion.getAnswer().equals(answer.getText())) {
-                            obtainedScore++;
-                            Toast.makeText(QuizActivity.this, correctToast, Toast.LENGTH_SHORT).show();
-                            Log.e("comments", "Correct Answer");
-                            Log.d("score", "Obtained score " + obtainedScore);
-                        } else {
-                            Log.e("comments", "Wrong Answer");
-                            Toast.makeText(QuizActivity.this, incorrectToast, Toast.LENGTH_SHORT).show();
-                        }
-                        if (questionId < questionsList.size()) {
-                            currentQuestion = questionsList.get(questionId);
-                            setQuestionsView();
-                            countDownTimer.start();
-                        } else {
-
-                            final Bundle b = new Bundle();
-                            b.putInt("score", obtainedScore);
-                            b.putInt("totalQs", questionsList.size());
-                            b.putString("Language", language);
-
-                            View view = (LayoutInflater.from(QuizActivity.this)).inflate(R.layout.user_alert_dialog_layout, null);
-                            AlertDialog.Builder alertBuilder = new AlertDialog.Builder(QuizActivity.this);
-                            alertBuilder.setView(view);
-                            final EditText etUserName = (EditText) view.findViewById(R.id.editTextUserName);
-                            alertBuilder.setCancelable(true).setPositiveButton("Ok", new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    if (etUserName.getText().toString().isEmpty() == false) {
-                                        String username = etUserName.getText().toString();
-                                        b.putString("Username", username);
-                                        Intent intent = new Intent(QuizActivity.this, ResultsActivity.class);
-                                        intent.putExtras(b);
-                                        startActivity(intent);
-                                        finish();
-                                    } else {
-                                        Toast.makeText(QuizActivity.this, "Please enter your name", Toast.LENGTH_SHORT).show();
-                                    }
-                                }
-                            });
-                            Dialog dialog = alertBuilder.create();
-                            dialog.show();
-
-
-                        }
-
+                    if (currentQuestion.getAnswer().equals(answer.getText())) {
+                        obtainedScore++;
+                        Toast.makeText(QuizActivity.this, correctToast, Toast.LENGTH_SHORT).show();
+                        answer.setTextColor(Color.parseColor("#ff99cc00"));
+                        Log.e("comments", "Correct Answer");
+                        Log.d("score", "Obtained score " + obtainedScore);
                     } else {
-                        Log.e("comments", "No Answer");
-                        Toast.makeText(QuizActivity.this, selectABtnToast, Toast.LENGTH_SHORT).show();
+                        Log.e("comments", "Wrong Answer");
+                        answer.setTextColor(Color.parseColor("#ff0000"));
+                        Toast.makeText(QuizActivity.this, incorrectToast, Toast.LENGTH_SHORT).show();
                     }
+                    if (questionId < questionsList.size()) {
+                        currentQuestion = questionsList.get(questionId);
+                        delay();
+
+                        countDownTimer.start();
+                    } else {
+                        createBundle(b, language);
+                        alertDialog();
+                    }
+
+                } else {
+                    Log.e("comments", "No Answer");
+                    Toast.makeText(QuizActivity.this, selectABtnToast, Toast.LENGTH_SHORT).show();
+                }
 
                 grp.clearCheck();
 
@@ -193,8 +128,6 @@ public class QuizActivity extends AppCompatActivity {
 
                 tvShowAnswer.setText(currentQuestion.getAnswer());
                 btnShowAnswer.setEnabled(false);
-
-
             }
         });
 
@@ -211,7 +144,7 @@ public class QuizActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
 
-
+                grp.clearCheck();
                 Random random = new Random();
                 pressedFiftyButton = true;
                 int i = 0, usedNumber = 0;
@@ -250,62 +183,91 @@ public class QuizActivity extends AppCompatActivity {
             }
         });
 
-
-        countDownTimer=new CountDownTimer(millisUntilFinished,interval) {
+        countDownTimer = new CountDownTimer(millisUntilFinished, interval) {
             @Override
             public void onTick(long millisUntilFinished) {
 
-                timer.setText("00:"+millisUntilFinished/interval);
-
-
+                long millis = millisUntilFinished;
+                String time = String.format("%02d:%02d", TimeUnit.MILLISECONDS.toMinutes(millis),
+                        TimeUnit.MILLISECONDS.toSeconds(millis) - TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(millis)));
+                timer.setText(time);
             }
 
             @Override
             public void onFinish() {
+                Log.i("questionID", String.valueOf(questionId));
+                RadioGroup grp = (RadioGroup) findViewById(R.id.radioGroup);
+                RadioButton answer = (RadioButton) findViewById(grp.getCheckedRadioButtonId());
+                resetRadioButtons();
+                if (answer != null) {
+                    if (currentQuestion.getAnswer().equals(answer.getText())) {
+                        Log.i("Current score", String.valueOf(obtainedScore));
+                        obtainedScore++;
+                        Log.i("New Score", String.valueOf(obtainedScore));
+                        answer.setTextColor(Color.parseColor("#ff99cc00"));
+                        Toast.makeText(QuizActivity.this, correctToast, Toast.LENGTH_SHORT).show();
+                    }
+                    else
+                    {
+                        answer.setTextColor(Color.parseColor("#ff0000"));
+                        Toast.makeText(QuizActivity.this, incorrectToast, Toast.LENGTH_SHORT).show();
+                    }
 
-                if (questionId < questionsList.size()) {
-                    currentQuestion = questionsList.get(questionId);
-                    setQuestionsView();
+                    if (questionId < questionsList.size()) {
+                        Log.i("questionIDstListSize", String.valueOf(questionId));
+                        currentQuestion = questionsList.get(questionId);
+                        delay();
+                        delayTimer();
+                    } else {
+                        countDownTimer.cancel();
+                        createBundle(b, language);
+                        alertDialog();
+                    }
                 } else {
-
-                    final Bundle b = new Bundle();
-                    b.putInt("score", obtainedScore);
-                    b.putInt("totalQs", questionsList.size());
-                    b.putString("Language", language);
-
-                    View view = (LayoutInflater.from(QuizActivity.this)).inflate(R.layout.user_alert_dialog_layout, null);
-                    AlertDialog.Builder alertBuilder = new AlertDialog.Builder(QuizActivity.this);
-                    alertBuilder.setView(view);
-                    final EditText etUserName = (EditText) view.findViewById(R.id.editTextUserName);
-                    alertBuilder.setCancelable(true).setPositiveButton("Ok", new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            if (etUserName.getText().toString().isEmpty() == false) {
-                                String username = etUserName.getText().toString();
-                                b.putString("Username", username);
-                                Intent intent = new Intent(QuizActivity.this, ResultsActivity.class);
-                                intent.putExtras(b);
-                                startActivity(intent);
-                                finish();
-                            } else {
-                                Toast.makeText(QuizActivity.this, "Please enter your name", Toast.LENGTH_SHORT).show();
-                            }
-                        }
-                    });
-                    Dialog dialog = alertBuilder.create();
-                    dialog.show();
-
-
+                    if (questionId < questionsList.size()) {
+                        Log.i("questionIDstListSize", String.valueOf(questionId));
+                        currentQuestion = questionsList.get(questionId);
+                        setQuestionsView();
+                        countDownTimer.start();
+                    } else {
+                        countDownTimer.cancel();
+                        createBundle(b, language);
+                        alertDialog();
+                    }
                 }
-
-             countDownTimer.start();
             }
-        }.start();
+        };
+
+        countDownTimer.start();
 
 
     }
 
+    public void delay()
+    {
+        final Handler handler = new Handler();
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                setQuestionsView();
+                resetRadioButtons();
 
+            }
+        }, 2000);
+
+    }
+
+    public void delayTimer()
+    {
+        final Handler handler = new Handler();
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+               countDownTimer.start();
+
+            }
+        }, 2000);
+    }
 
     public int getCorrectAnswerButton() {
 
@@ -321,10 +283,11 @@ public class QuizActivity extends AppCompatActivity {
     }
 
     public void init() {
+        grp = (RadioGroup) findViewById(R.id.radioGroup);
         tvShowAnswer = (TextView) findViewById(R.id.textViewAnsweredShown);
         tvNoOfQuestions = (TextView) findViewById(R.id.tvNoOfQuestions);
         tvQuestion = (TextView) findViewById(R.id.tvQuestion);
-        timer=(TextView) findViewById(R.id.textViewTimer);
+        timer = (TextView) findViewById(R.id.textViewTimer);
         rbtnA = (RadioButton) findViewById(R.id.optionARadioBtn);
         rbtnB = (RadioButton) findViewById(R.id.optionBRadioBtn);
         rbtnC = (RadioButton) findViewById(R.id.optionCRadioBtn);
@@ -334,9 +297,28 @@ public class QuizActivity extends AppCompatActivity {
         btnShowAnswer = (Button) findViewById(R.id.showAnswerBtn);
         btnCancel = (Button) findViewById(R.id.cancelButton);
 
-        userAnswersList = new ArrayList<String>();
     }
 
+    public void alertDialog()
+    {
+        View view = (LayoutInflater.from(QuizActivity.this)).inflate(R.layout.user_alert_dialog_layout, null);
+        AlertDialog.Builder alertBuilder = new AlertDialog.Builder(QuizActivity.this);
+        alertBuilder.setView(view);
+        final EditText etUserName = (EditText) view.findViewById(R.id.editTextUserName);
+        alertBuilder.setCancelable(true).setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                if (etUserName.getText().toString().isEmpty() == false) {
+                    startFinalActivity(etUserName.getText().toString(),b);
+
+                } else {
+                    Toast.makeText(QuizActivity.this, "Please enter your name", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+        Dialog dialog = alertBuilder.create();
+        dialog.show();
+    }
 
     private void setQuestionsView() {
         rbtnA.setChecked(false);
@@ -360,4 +342,66 @@ public class QuizActivity extends AppCompatActivity {
         questionId++;
     }
 
+    public void startFinalActivity(String username,Bundle b)
+    {
+        b.putString("Username", username);
+        Intent intent = new Intent(QuizActivity.this, ResultsActivity.class);
+        intent.putExtras(b);
+        startActivity(intent);
+        finish();
+    }
+
+    public void createBundle(Bundle bundle, String language)
+    {
+        bundle.putInt("score", obtainedScore);
+        bundle.putInt("totalQs", questionsList.size());
+        bundle.putString("Language", language);
+    }
+
+    public void setEnglish()
+    {
+        correctToast = "Correct";
+        incorrectToast = "Incorrect";
+        selectABtnToast = "Please select an answer";
+        defaultLanguage = false;
+        databaseEnAccess.open();
+        allQuestions = databaseEnAccess.getEnglishQuestions();
+        Collections.shuffle(allQuestions);
+        questionsList = new ArrayList<Question>(allQuestions.subList(0, 10));
+        init();
+        currentQuestion = questionsList.get(questionId);
+        setQuestionsView();
+        databaseEnAccess.close();
+    }
+
+    public  void setRomanian()
+    {
+        correctToast = "Corect";
+        incorrectToast = "Greșit";
+        selectABtnToast = "Selectați un răspuns";
+        defaultLanguage = true;
+        databaseRoAccess.open();
+        allQuestions = databaseRoAccess.getRomanianQuestions();
+        Collections.shuffle(allQuestions);
+        questionsList = new ArrayList<Question>(allQuestions.subList(0, 10));
+        init();
+        currentQuestion = questionsList.get(questionId);
+        setQuestionsView();
+        databaseRoAccess.close();
+    }
+
+    public void resetRadioButtons()
+    {
+        tvShowAnswer.setText("");
+        rbtnA.setTextColor(Color.parseColor("#000000"));
+        rbtnB.setTextColor(Color.parseColor("#000000"));
+        rbtnC.setTextColor(Color.parseColor("#000000"));
+        rbtnD.setTextColor(Color.parseColor("#000000"));
+        if (pressedFiftyButton == true) {
+            if (rbtnA.isEnabled() == false) rbtnA.setEnabled(true);
+            if (rbtnB.isEnabled() == false) rbtnB.setEnabled(true);
+            if (rbtnC.isEnabled() == false) rbtnC.setEnabled(true);
+            if (rbtnD.isEnabled() == false) rbtnD.setEnabled(true);
+        }
+    }
 }
