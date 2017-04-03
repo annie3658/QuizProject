@@ -22,11 +22,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.concurrent.TimeUnit;
 import android.os.Handler;
-import java.util.logging.LogRecord;
 
 import annie.com.quizproject.database.DatabaseEnAccess;
 import annie.com.quizproject.database.DatabaseRoAccess;
@@ -45,7 +42,7 @@ public class QuizActivity extends AppCompatActivity {
     private RadioGroup grp;
     private Button btnNext, btnShowAnswer, btnFifty, btnCancel;
     private int obtainedScore = 0, questionId = 0, answeredQsNo;
-    private boolean defaultLanguage = false, pressedFiftyButton = false, isFinished = false;
+    private boolean defaultLanguage = false, pressedFiftyButton,pressedShowAnswerButton;
     private DatabaseEnAccess databaseEnAccess;
     private DatabaseRoAccess databaseRoAccess;
     private String correctToast, incorrectToast, selectABtnToast;
@@ -104,12 +101,13 @@ public class QuizActivity extends AppCompatActivity {
                     }
                     if (questionId < questionsList.size()) {
                         currentQuestion = questionsList.get(questionId);
-                        delay();
+                        disableButtons();
+                        delaySetQuestion();
+                        delayTimer();
 
-                        countDownTimer.start();
                     } else {
                         createBundle(b, language);
-                        alertDialog();
+                        delayAlertDialog();
                     }
 
                 } else {
@@ -127,6 +125,7 @@ public class QuizActivity extends AppCompatActivity {
             public void onClick(View v) {
 
                 tvShowAnswer.setText(currentQuestion.getAnswer());
+                pressedShowAnswerButton=true;
                 btnShowAnswer.setEnabled(false);
             }
         });
@@ -216,12 +215,13 @@ public class QuizActivity extends AppCompatActivity {
                     if (questionId < questionsList.size()) {
                         Log.i("questionIDstListSize", String.valueOf(questionId));
                         currentQuestion = questionsList.get(questionId);
-                        delay();
+                        delaySetQuestion();
                         delayTimer();
+
                     } else {
                         countDownTimer.cancel();
                         createBundle(b, language);
-                        alertDialog();
+                        delayAlertDialog();
                     }
                 } else {
                     if (questionId < questionsList.size()) {
@@ -243,7 +243,7 @@ public class QuizActivity extends AppCompatActivity {
 
     }
 
-    public void delay()
+    public void delaySetQuestion()
     {
         final Handler handler = new Handler();
         handler.postDelayed(new Runnable() {
@@ -251,10 +251,22 @@ public class QuizActivity extends AppCompatActivity {
             public void run() {
                 setQuestionsView();
                 resetRadioButtons();
+                enableButtons();
 
             }
         }, 2000);
 
+    }
+
+    public void delayAlertDialog()
+    {
+        final Handler handler=new Handler();
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                alertDialog();
+            }
+        },2000);
     }
 
     public void delayTimer()
@@ -403,5 +415,30 @@ public class QuizActivity extends AppCompatActivity {
             if (rbtnC.isEnabled() == false) rbtnC.setEnabled(true);
             if (rbtnD.isEnabled() == false) rbtnD.setEnabled(true);
         }
+    }
+
+    public void disableButtons()
+    {
+        btnNext.setEnabled(false);
+        btnFifty.setEnabled(false);
+        btnShowAnswer.setEnabled(false);
+        rbtnA.setEnabled(false);
+        rbtnB.setEnabled(false);
+        rbtnC.setEnabled(false);
+        rbtnD.setEnabled(false);
+    }
+    public void enableButtons()
+    {
+        btnNext.setEnabled(true);
+        if(pressedFiftyButton==false) {
+            btnFifty.setEnabled(true);
+        }
+        if(pressedShowAnswerButton==false) {
+            btnShowAnswer.setEnabled(true);
+        }
+        rbtnA.setEnabled(true);
+        rbtnB.setEnabled(true);
+        rbtnC.setEnabled(true);
+        rbtnD.setEnabled(true);
     }
 }
