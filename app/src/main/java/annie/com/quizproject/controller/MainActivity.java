@@ -16,7 +16,7 @@ import annie.com.quizproject.adapter.SpinnerAdapter;
 
 public class MainActivity extends AppCompatActivity {
 
-    private String[] languages = {"English", "Romanian"};
+    private String[] languages = {"English", "Română"};
     private int[] images = {R.drawable.uk_flag, R.drawable.ro_flag};
     private Button mStartButton;
     private Spinner mSpinner;
