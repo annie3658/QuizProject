@@ -15,4 +15,5 @@
     <string name="startNewGameButton">Începețti joc nou</string>
     <string name="viewScoresButoon">Vizualizare scoruri</string>
     <string name="usernameInput">Introduceți-vă numele</string>
+    <string name="share_facebook">Distribuie</string>
 </resources>
