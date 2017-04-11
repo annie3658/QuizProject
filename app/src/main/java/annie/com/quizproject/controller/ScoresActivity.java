@@ -35,10 +35,10 @@ public class ScoresActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.scores_activity);
-        databaseUsers= FirebaseDatabase.getInstance().getReference("users");
-        listView=(ListView)findViewById(R.id.scoresListView);
-        btnStartGame=(Button)findViewById(R.id.startGameBtn);
-        usersList=new ArrayList<>();
+        databaseUsers = FirebaseDatabase.getInstance().getReference("users");
+        listView = (ListView) findViewById(R.id.scoresListView);
+        btnStartGame = (Button) findViewById(R.id.startGameBtn);
+        usersList = new ArrayList<>();
 
         btnStartGame.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -58,12 +58,11 @@ public class ScoresActivity extends AppCompatActivity {
             public void onDataChange(DataSnapshot dataSnapshot) {
 
                 usersList.clear();
-                for(DataSnapshot userSnapshot: dataSnapshot.getChildren())
-                {
-                  User user=userSnapshot.getValue(User.class);
+                for (DataSnapshot userSnapshot : dataSnapshot.getChildren()) {
+                    User user = userSnapshot.getValue(User.class);
                     usersList.add(user);
                 }
-                ListviewAdapter adapter=new ListviewAdapter(ScoresActivity.this,usersList);
+                ListviewAdapter adapter = new ListviewAdapter(ScoresActivity.this, usersList);
                 listView.setAdapter(adapter);
 
             }
