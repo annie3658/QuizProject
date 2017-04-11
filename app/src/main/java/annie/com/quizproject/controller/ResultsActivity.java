@@ -33,17 +33,15 @@ public class ResultsActivity extends AppCompatActivity {
     private RatingBar ratingBar;
     private TextView numberOfQuestionsAnswered;
     private TextView scoreRating;
-    private Button btnRestartGame,btnViewScores, btnShare;
+    private Button btnRestartGame,btnViewScores;
+    ShareButton fbShareButton;
     private int score;
-    private String caption;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.results_activity);
 
         FacebookSdk.sdkInitialize(getApplicationContext());
-
-        ShareButton fbShareButton = (ShareButton) findViewById(R.id.btnShare);
 
         init();
 
@@ -55,8 +53,6 @@ public class ResultsActivity extends AppCompatActivity {
         final String language=b.getString("Language");
         String username=b.getString("Username");
 
-
-        //Bitmap image = BitmapFactory.decodeResource(getResources(), R.drawable.stars_0);
         Bitmap image=sharePhotoToFacebook(score);
         SharePhoto photo = new SharePhoto.Builder()
                 .setBitmap(image)
@@ -66,21 +62,18 @@ public class ResultsActivity extends AppCompatActivity {
                 .build();
         fbShareButton.setShareContent(content);
 
-
         ratingBar.setRating((float)(score*5)/totalQs);
 
         switch (language)
         {
             case "English":
                 setEnglish(username,score,totalQs);
-                caption="These are my results:";
+
                 break;
             case "Romanian":
-                caption="Acestea sunt rezultatele mele:";
                 setRomanian(username,score,totalQs);
                 break;
             default:
-                caption="These are my results:";
                 setEnglish(username,score,totalQs);
         }
 
@@ -100,7 +93,7 @@ public class ResultsActivity extends AppCompatActivity {
         btnViewScores=(Button)findViewById(R.id.btnViewScores);
         numberOfQuestionsAnswered =(TextView)findViewById(R.id.tvNumberOfQuestionsAnswered);
         scoreRating=(TextView)findViewById(R.id.tvScoreRating);
-        //btnShare=(Button)findViewById(R.id.shareBtn);
+        fbShareButton = (ShareButton) findViewById(R.id.btnShare);
     }
 
     public void setEnglish(String username, int score, int noOfQs)
@@ -200,7 +193,6 @@ public class ResultsActivity extends AppCompatActivity {
 
 
         }
-
         return image;
 
     }

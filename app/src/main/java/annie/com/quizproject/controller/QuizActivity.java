@@ -28,10 +28,14 @@ import java.util.concurrent.TimeUnit;
 
 import android.os.Handler;
 
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+
 import annie.com.quizproject.database.DatabaseEnAccess;
 import annie.com.quizproject.database.DatabaseRoAccess;
 import annie.com.quizproject.model.Question;
 import annie.com.quizproject.R;
+import annie.com.quizproject.model.User;
 
 /**
  * Created by Annie on 30/03/2017.
@@ -48,18 +52,22 @@ public class QuizActivity extends AppCompatActivity {
     private boolean defaultLanguage = false, pressedFiftyButton, pressedShowAnswerButton;
     private DatabaseEnAccess databaseEnAccess;
     private DatabaseRoAccess databaseRoAccess;
-    private String correctToast, incorrectToast, selectABtnToast, enterNameToast;
+    private String correctToast, incorrectToast, selectABtnToast, enterNameToast, usernameInput,selectedLanguage;
     private CountDownTimer countDownTimer;
     private long millisUntilFinished = 15000, interval = 1000;
     private final Bundle b = new Bundle();
+    private DatabaseReference databaseUsers;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.quiz_activity);
 
+        databaseUsers= FirebaseDatabase.getInstance().getReference("users");
+
         Bundle extras = getIntent().getExtras();
         final String language = extras.getString("Language");
+        selectedLanguage=language;
         databaseEnAccess = DatabaseEnAccess.getInstance(this);
         databaseRoAccess = DatabaseRoAccess.getInstance(this);
 
@@ -341,12 +349,13 @@ public class QuizActivity extends AppCompatActivity {
         alertDialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                String usernameInput = etUserName.getEditableText().toString().trim();
+                usernameInput = etUserName.getEditableText().toString().trim();
 
                 if (usernameInput.length() == 0) {
                     Toast.makeText(QuizActivity.this, enterNameToast, Toast.LENGTH_SHORT).show();
                     return;
                 }
+                addUser(usernameInput,String.valueOf(obtainedScore));
                 startFinalActivity(etUserName.getText().toString(), b);
                 alertDialog.dismiss();
             }
@@ -437,5 +446,12 @@ public class QuizActivity extends AppCompatActivity {
         rbtnB.setEnabled(true);
         rbtnC.setEnabled(true);
         rbtnD.setEnabled(true);
+    }
+
+    private void addUser(String username, String userScore)
+    {
+        String id=databaseUsers.push().getKey();
+        User user=new User(id,username,selectedLanguage,userScore);
+        databaseUsers.child(id).setValue(user);
     }
 }
