@@ -84,6 +84,14 @@ public class ResultsActivity extends AppCompatActivity {
                 startActivity(intent);
             }
         });
+
+        btnViewScores.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent2 = new Intent(ResultsActivity.this, ScoresActivity.class);
+                startActivity(intent2);
+            }
+        });
     }
 
     public void init()

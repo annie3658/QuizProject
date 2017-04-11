@@ -18,9 +18,9 @@ import annie.com.quizproject.R;
 
 public class SpinnerAdapter extends ArrayAdapter<String> {
 
-    Context c;
-    String[] flags;
-    int[] images;
+   private Context c;
+   private String[] flags;
+    private int[] images;
 
     public SpinnerAdapter(Context ctx, String[] flags, int[] images) {
         super(ctx, R.layout.spinner_layout, flags);

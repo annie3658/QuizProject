@@ -12,8 +12,11 @@
     <string name="enterName">Introduceți-vă numele</string>
     <string name="country">Țara</string>
     <string name="finalActivityTitle">Rezultate</string>
-    <string name="startNewGameButton">Începețti joc nou</string>
+    <string name="startNewGameButton">Începeți joc nou</string>
     <string name="viewScoresButoon">Vizualizare scoruri</string>
     <string name="usernameInput">Introduceți-vă numele</string>
     <string name="share_facebook">Distribuie</string>
+    <string name="username">Username</string>
+    <string name="score">Scor</string>
+    <string name="language">Limbă</string>
 </resources>
